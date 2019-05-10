@@ -1,11 +1,11 @@
-#ExportProbe 
-*Export data from tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer)*
+# exportProbe
+* Export data from tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer) *
 
-#Depend
+# Depend
 
 - sqlite3
 
-#Usage
+# Usage
 
 ./exportProbe.sh -h
 
