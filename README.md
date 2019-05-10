@@ -1,6 +1,8 @@
 # exportProbe
 *Export data from tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer)*
 
+![](img/example.gif)
+
 # Depend
 
 - sqlite3
