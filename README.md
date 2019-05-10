@@ -1,7 +1,7 @@
 # exportProbe
 *Export data from tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer)*
 
-![](img/example.gif)
+![speed="1"](img/example.gif)
 
 # Depend
 
