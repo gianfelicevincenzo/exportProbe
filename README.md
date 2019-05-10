@@ -1,7 +1,9 @@
 # exportProbe
 *Export data from tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer)*
 
-![](img/example.gif)
+<p align="center">
+<img src="img/example.gif">
+</p>
 
 # Depend
 
