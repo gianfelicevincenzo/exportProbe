@@ -66,7 +66,7 @@ function check_db() {
 		return
 	fi
 	if ! echo "$check_sqlite" | grep -i 'sqlite' &> /dev/null;  then
-		echo "Errore: Il file '$DB' non e' un DB Sqlite"
+		echo "Errore: Il file '$DB' non e' un DB Sqlite" >&2
 		exit 1
 	fi
 }
@@ -100,7 +100,7 @@ function output_data() {
 	fi
 	if [[ $REPLACE_MAC_VENDOR_ERROR -eq 1 ]]; then
 		if [ ! -f oui.txt ]; then
-			echo "Errore: Impossibile trovare il file 'oui.txt'"
+			echo "Errore: Impossibile trovare il file 'oui.txt'" >&2
 			exit 1
 		fi
 		MAC_SEARCH=($(echo "$CONTENT_DB" | grep 'RESOLVE-ERROR' | awk 'BEGIN{FS="|"}{print $1}' | paste -s -d' '))
@@ -110,8 +110,8 @@ function output_data() {
 		VENDOR_FOUND=""
 		LENGTH=${#MAC_SEARCH[@]}
 
-		echo "+ Total MAC: $LENGTH"
-		echo "+ Searching vendor..."
+		echo "+ Total MAC: $LENGTH" >&2
+		echo "+ Searching vendor..." >&2
 
 		for (( i=0; i<$LENGTH; i++ )); do
 			VENDOR_FOUND="$(grep -Ei "$(echo ${MAC_SEARCH[$i]} | awk 'BEGIN{FS=":"}{print $1$2$3}')""|""$(echo ${MAC_SEARCH[$i]} | awk 'BEGIN{FS=":"}{print $1":"$2":"$3}')" $NAME_MAC_FILE_VENDOR | awk '{print $2}')"
@@ -140,7 +140,7 @@ while getopts "d:u:bDSBreEnMmhf" arg; do
 			DB="$OPTARG"
 
 			if [ ! -f "$DB" ]; then
-				echo "Errore: Il file '$DB' non esiste"
+				echo "Errore: Il file '$DB' non esiste" >&2
 				exit 1
 			fi
 			;;
@@ -149,7 +149,7 @@ while getopts "d:u:bDSBreEnMmhf" arg; do
 			;;
 		u) # Merge DB
 			if [ ! -f "$OPTARG" ]; then
-				echo "Errore: Il DB '$OPTARG' non esiste"
+				echo "Errore: Il DB '$OPTARG' non esiste" >&2
 				exit 1
 			fi
 			count=$((count+1))
@@ -193,34 +193,33 @@ done
 shift $((OPTIND-1))
 
 if [ -z "$DB" ]; then
-	echo "Errore: Nessun DB specificato"
+	echo "Errore: Nessun DB specificato" >&2
 	exit 1
 fi
 if [[ "${MERGE_DB[@]}" ]]; then
 	echo ""
 	if [[ $BACKUP -eq 1 ]]; then
 		if [ ! -f "${DB}_backup" ]; then
-			echo "* Backup db $DB in ${DB}_backup"
-			echo ""
+			echo "* Backup db $DB in ${DB}_backup" >&2
+			echo "" >&2
 
 			if ! cp "$DB" "${DB}_backup" &>/dev/null; then
-				echo "Errore: Impossibile eseguire il backup DB. Probabile che non si hanno i permessi di scrittura."
+				echo "Errore: Impossibile eseguire il backup DB. Probabile che non si hanno i permessi di scrittura." >&2
 				exit 1
 			fi
 		else
-			echo "Errore: un backup esiste gia"
+			echo "Errore: un backup esiste gia" >&2
 			exit 1
 		fi
-
 	fi
 
 	for db_merge in $(seq 1 $count); do
 
 		if sqlite3 "$DB" ".tables" | grep 'probeSniffer' &>/dev/null; then
-			echo "Merging file '${MERGE_DB[$db_merge]}' in '$DB'..."
+			echo "Merging file '${MERGE_DB[$db_merge]}' in '$DB'..." >&2
 			sqlite3 "${MERGE_DB[$db_merge]}" ".dump $TABLE" | grep ^INSERT | sqlite3 "$DB"
 		else
-			echo "Il DB '${MERGE_DB[$db_merge]}' non e' un DB adatto per questo tipo di DB"
+			echo "Il DB '${MERGE_DB[$db_merge]}' non e' un DB adatto per questo tipo di DB" >&2
 		fi
 	done
 	echo ""
