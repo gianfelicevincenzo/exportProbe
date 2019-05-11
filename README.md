@@ -5,7 +5,7 @@
 <img src="img/example.gif">
 </p>
 
-# Depend
+# Dependencies
 
 - sqlite3
 
