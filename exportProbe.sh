@@ -269,7 +269,6 @@ while getopts "d:u:bDsBeEnMmhfSRCHJ" arg; do
 done
 shift $((OPTIND-1))
 
-
 if [ -z "$DB" ]; then
 	echo "Errore: Nessun DB specificato" >&2
 	exit 1

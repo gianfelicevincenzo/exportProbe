@@ -5,7 +5,7 @@
 
 BEGIN {
 	FS="|"
-	printf("{\n")
+	printf("[\n")
 }
 {       
         #Header DB
@@ -24,15 +24,15 @@ BEGIN {
 	} else {
 	   #Write parser data DB
 	   printf("   {\n")
-	   printf("      \"%s\" : \"%s\"\n", mac, $1)
-	   printf("      \"%s\" : \"%s\"\n", vendor, $2)
-	   printf("      \"%s\" : \"%s\"\n", essid, $3)
-	   printf("      \"%s\" : \"%s\"\n", date, $4)
-	   printf("      \"%s\" : \"%s\"\n", signal, $5)
-	   printf("      \"%s\" : \"%s\"\n", mac_associate, $6)
+	   printf("      \"%s\" : \"%s\",\n", mac, $1)
+	   printf("      \"%s\" : \"%s\",\n", vendor, $2)
+	   printf("      \"%s\" : \"%s\",\n", essid, $3)
+	   printf("      \"%s\" : \"%s\",\n", date, $4)
+	   printf("      \"%s\" : \"%s\",\n", signal, $5)
+	   printf("      \"%s\" : \"%s\",\n", mac_associate, $6)
 	   printf("   },\n")
         }
 }
 END {
-	printf("}\n")
+	printf("]\n")
 }
