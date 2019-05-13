@@ -25,11 +25,12 @@ REMOVE_DUPLICATE=0
 SORT=0
 VENDOR_RESOLVE=""
 CONTENT_DB=""
+HEADER=""
 EXPORT_RAW=0
 EXPORT_CSV=0
 EXPORT_HTML=0
 EXPORT_JSON=0
-EXPORT_SQLITE=0
+DUMP_SQLITE=0
 
 function help() {
 cat << "EOF"
@@ -62,7 +63,7 @@ EOF
 	echo "	            The file default is 'oui.txt'"
 	echo ""
 	echo " Export Format:"
-	echo "	-S	    Export Sqlite3 DB for backup"
+	echo "	-S	    Dump all tables and fields of the DB Sqlite for backup"
 	echo "	-R	    Export RAW Format"
 	echo "	-C	    Export CSV format"
 	echo " 	-H	    Export HTML format"
@@ -81,59 +82,43 @@ function check_db() {
 	fi
 }
 
-function export_db_sqlite() {
-	CONTENT_DB="$(sqlite3 "$DB" "select * from "$TABLE";")"
+function export_db() {
+	CONTENT_DB="$(sqlite3 "$DB" "select * from "$TABLE";")" # Output DB Data
+	HEADER="$(sqlite3 -header "$DB" "select * from "$TABLE" LIMIT 1;" | head -n1)" # Output Header DB
 }
 
-function export_raw() {
-	CONTENT_DB="$(sqlite3 -header "$DB" "select * from "$TABLE";")" # Output RAW 
-	echo "$CONTENT_DB"
-}
-
-function export_csv() {
-	CONTENT_DB="$(sqlite3 -header -csv "$DB" "select * from "$TABLE";")" # Output CSV
-	echo "$CONTENT_DB"
-}
-
-function export_html() {
-	CONTENT_DB="$(sqlite3 -header "$DB" "select * from "$TABLE";")" # Output RAW 
-        echo "$CONTENT_DB" | awk -f lib/parser_html.awk
-}
-
-function export_json() {
-	CONTENT_DB="$(sqlite3 -header "$DB" "select * from "$TABLE";")" # Output RAW 
-	echo "$CONTENT_DB" | awk -f lib/parser_json.awk
-}
-
-function export_sqlite() {
+function dump_db_sqlite() {
 	CONTENT_DB="$(sqlite3 "$DB" ".dump")"
 	echo "$CONTENT_DB"
 }
- 
+
+function export_raw() {
+	CONTENT_DB="$HEADER\n$CONTENT_DB"
+	echo -e "$CONTENT_DB"
+}
+
+function export_csv() {
+	CONTENT_DB="$HEADER\n$CONTENT_DB"
+	echo -e "$CONTENT_DB" | awk -f lib/parser_csv.awk
+}
+
+function export_html() {
+	CONTENT_DB="$HEADER\n$CONTENT_DB"
+        echo -e "$CONTENT_DB" | awk -f lib/parser_html.awk
+}
+
+function export_json() {
+	CONTENT_DB="$HEADER\n$CONTENT_DB"
+	echo -e "$CONTENT_DB" | awk -f lib/parser_json.awk
+}
+
 function output_data() {
-	###EXPORT###
-	if [[ $EXPORT_RAW -eq 1 ]]; then
-		export_raw
-		exit 0
-	fi
-	if [[ $EXPORT_CSV -eq 1 ]]; then
-		export_csv
-		exit 0
-	fi
-	if [[ $EXPORT_HTML -eq 1 ]]; then
-		export_html
-		exit 0
-	fi
-	if [[ $EXPORT_JSON -eq 1 ]]; then
-		export_json
-		exit 0
-	fi
-	if [[ $EXPORT_SQLITE -eq 1 ]]; then
-		export_sqlite
+	if [[ $DUMP_SQLITE -eq 1 ]]; then
+		dump_db_sqlite
 		exit 0
 	fi
 
-	export_db_sqlite
+	export_db
 
 	if [[ $REMOVE_DUPLICATE -eq 1 ]]; then
 		CONTENT_DB="$(echo "$CONTENT_DB" | sort -uk1,3)"
@@ -148,7 +133,7 @@ function output_data() {
 		CONTENT_DB="$(echo "$CONTENT_DB" | sort -t '|' -k3,3)"
 	fi
 	if [[ $NULL_MAC_VENDOR -eq 1 ]]; then
-		CONTENT_DB="$(echo "$CONTENT_DB" | grep 'RESOLVE-ERROR')"
+		CONTENT_DB="$(echo "$CONTENT_DB" | grep '|RESOLVE-ERROR|')"
 	fi
 	if [[ $SSID_AND_MAC_CORRECT -eq 1 ]]; then
 		CONTENT_DB="$(echo "$CONTENT_DB" | grep -Ev '\|SSID: \||\|RESOLVE-ERROR\|')"
@@ -179,6 +164,27 @@ function output_data() {
 		done
 	fi
 
+	if [ -z "$CONTENT_DB" ]; then
+		return
+	fi
+	###EXPORT###
+	if [[ $EXPORT_RAW -eq 1 ]]; then
+		export_raw
+		exit 0
+	fi
+	if [[ $EXPORT_HTML -eq 1 ]]; then
+		export_html
+		exit 0
+	fi
+	if [[ $EXPORT_JSON -eq 1 ]]; then
+		export_json
+		exit 0
+	fi
+	if [[ $EXPORT_CSV -eq 1 ]]; then
+		export_csv
+		exit 0
+	fi
+	
 	echo "$CONTENT_DB" | column -t -s'|'
 }
 
@@ -214,7 +220,7 @@ while getopts "d:u:bDsBeEnMmhfSRCHJ" arg; do
 			MERGE_DB[$count]="$OPTARG"
 			;;
 		S)
-			EXPORT_SQLITE=1
+			DUMP_SQLITE=1
 			;;
 		R)
 			EXPORT_RAW=1

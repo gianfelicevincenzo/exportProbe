@@ -33,7 +33,7 @@ BEGIN {
    printf("      }\n")
    printf("      #total {\n")
    printf("         border: 0;\n")
-   printf("         padding: 10px;\n")
+   printf("         padding-top: 10px;\n")
    printf("         text-align: left;\n")
    printf("         font-size: 20px;\n")
    printf("      }\n")
