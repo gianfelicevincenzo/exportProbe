@@ -1,8 +1,8 @@
 #!/bin/bash
-#
-#  Coded by: vincenzogianfelice <developer.vincenzog@gmail.com>
-#  View my github at https://github.com/vincenzogianfelice
-#  My site: https://vincenzogianfelice.altervista.org
+
+# Coded by: vincenzogianfelice <developer.vincenzog@gmail.com>
+# View my github at https://github.com/vincenzogianfelice
+# My site: https://vincenzogianfelice.altervista.org
 
 set -o noclobber
 
