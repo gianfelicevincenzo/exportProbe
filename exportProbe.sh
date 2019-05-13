@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+#  Coded by: vincenzogianfelice <developer.vincenzog@gmail.com>
+#  View my github at https://github.com/vincenzogianfelice
+#  My site: https://vincenzogianfelice.altervista.org
+
 set -o noclobber
 
 NAME_MAC_FILE_VENDOR="oui.txt"
@@ -15,12 +20,15 @@ SSID_AND_MAC_CORRECT=0
 NULL_MAC_VENDOR=0
 REMOVE_BROADCAST=0
 FORCE_OPERATION=0
-PRINT_RAW_DB=0
 REPLACE_MAC_VENDOR_ERROR=0
 REMOVE_DUPLICATE=0
 SORT=0
 VENDOR_RESOLVE=""
 CONTENT_DB=""
+EXPORT_RAW=0
+EXPORT_CSV=0
+EXPORT_HTML=0
+EXPORT_JSON=0
 
 function help() {
 cat << "EOF"
@@ -33,12 +41,11 @@ cat << "EOF"
 
 EOF
 	echo""
-	echo " Usage: $0 -d file.db [ -r | -e | -n ] | -h"
+	echo " Usage: $0 -d file.db [ -E | -e | -n | ... ] | -h"
 	echo ""
 	echo " Options:"
 	echo " 	-d <file>   Database file"
 	echo "	-f          Force read DB in case of error"
-	echo "	-r          Print raw DB"
 	echo " 	-e          Print only devices with an SSID"
 	echo " 	-n          Print only devices that have null SSID field"
 	echo "	-M          Print only devices that do not have a MAC vendor"
@@ -53,11 +60,12 @@ EOF
 	echo " 	-m          Search Vendor MAC Address for devices that were not found"
 	echo "	            The file default is 'oui.txt'"
 	echo ""
-}
-
-function export_db_sqlite() {
-	#CONTENT_DB="$(sqlite3 -csv "$DB" "select * from "$TABLE";")" # Output CSV
-	CONTENT_DB="$(sqlite3 "$DB" "select * from "$TABLE";")"
+	echo " Export Format:"
+	echo "	-R	    Export RAW Format"
+	echo "	-C	    Export CSV format"
+	echo " 	-H	    Export HTML format"
+	echo "	-J	    Export JSON format"
+	echo ""
 }
 
 function check_db() {
@@ -71,9 +79,46 @@ function check_db() {
 	fi
 }
 
+function export_db_sqlite() {
+	CONTENT_DB="$(sqlite3 "$DB" "select * from "$TABLE";")"
+}
+
+function export_raw() {
+	CONTENT_DB="$(sqlite3 -header "$DB" "select * from "$TABLE";")" # Output RAW 
+	echo "$CONTENT_DB"
+}
+
+function export_csv() {
+	CONTENT_DB="$(sqlite3 -header -csv "$DB" "select * from "$TABLE";")" # Output CSV
+	echo "$CONTENT_DB"
+}
+
+function export_html() {
+	CONTENT_DB="$(sqlite3 -header "$DB" "select * from "$TABLE";")" # Output RAW 
+        echo "$CONTENT_DB" | awk -f lib/parser_html.awk
+}
+
+function export_json() {
+	CONTENT_DB="$(sqlite3 -header "$DB" "select * from "$TABLE";")" # Output RAW 
+	echo "$CONTENT_DB" | awk -f lib/parser_json.awk
+}
+
 function output_data() {
-	if [[ $PRINT_RAW_DB -eq 1 ]]; then
-		echo "$CONTENT_DB"
+	###EXPORT###
+	if [[ $EXPORT_RAW -eq 1 ]]; then
+		export_raw
+		exit 0
+	fi
+	if [[ $EXPORT_CSV -eq 1 ]]; then
+		export_csv
+		exit 0
+	fi
+	if [[ $EXPORT_HTML -eq 1 ]]; then
+		export_html
+		exit 0
+	fi
+	if [[ $EXPORT_JSON -eq 1 ]]; then
+		export_json
 		exit 0
 	fi
 
@@ -130,7 +175,7 @@ if [[ $# -lt 1 ]]; then
 	exit 1
 fi
 
-while getopts "d:u:bDSBreEnMmhf" arg; do
+while getopts "d:u:bDSBeEnMmhfRCHJ" arg; do
 	case "$arg" in
 		h)
 			help
@@ -155,8 +200,17 @@ while getopts "d:u:bDSBreEnMmhf" arg; do
 			count=$((count+1))
 			MERGE_DB[$count]="$OPTARG"
 			;;
-		r)
-			PRINT_RAW_DB=1
+		R)
+			EXPORT_RAW=1
+			;;
+		C)
+			EXPORT_CSV=1
+			;;
+		H)
+			EXPORT_HTML=1
+			;;
+		J)
+			EXPORT_JSON=1
 			;;
 		e)
 			SSID=1
