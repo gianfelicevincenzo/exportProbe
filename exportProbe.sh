@@ -29,6 +29,7 @@ EXPORT_RAW=0
 EXPORT_CSV=0
 EXPORT_HTML=0
 EXPORT_JSON=0
+EXPORT_SQLITE=0
 
 function help() {
 cat << "EOF"
@@ -52,7 +53,7 @@ EOF
 	echo " 	-E          Print only devices that have correct SSID and MAC vendor field"
 	echo "	-B          Print without broadcast devices"
 	echo "	-D          Remove duplicate lines"
-	echo "	-S          Sort for ESSID"
+	echo "	-s          Sort for ESSID"
 	echo "	-u          Merge multiple DBs into principal DB"
 	echo "	            (Es.) $0 -d file_principal.db -u file.db2 -u file.db3 -u file.db3 ecc..."
 	echo "	-b	    Backup DB before merge with other DB"
@@ -61,6 +62,7 @@ EOF
 	echo "	            The file default is 'oui.txt'"
 	echo ""
 	echo " Export Format:"
+	echo "	-S	    Export Sqlite3 DB for backup"
 	echo "	-R	    Export RAW Format"
 	echo "	-C	    Export CSV format"
 	echo " 	-H	    Export HTML format"
@@ -103,6 +105,11 @@ function export_json() {
 	echo "$CONTENT_DB" | awk -f lib/parser_json.awk
 }
 
+function export_sqlite() {
+	CONTENT_DB="$(sqlite3 "$DB" ".dump")"
+	echo "$CONTENT_DB"
+}
+ 
 function output_data() {
 	###EXPORT###
 	if [[ $EXPORT_RAW -eq 1 ]]; then
@@ -121,6 +128,12 @@ function output_data() {
 		export_json
 		exit 0
 	fi
+	if [[ $EXPORT_SQLITE -eq 1 ]]; then
+		export_sqlite
+		exit 0
+	fi
+
+	export_db_sqlite
 
 	if [[ $REMOVE_DUPLICATE -eq 1 ]]; then
 		CONTENT_DB="$(echo "$CONTENT_DB" | sort -uk1,3)"
@@ -175,7 +188,7 @@ if [[ $# -lt 1 ]]; then
 	exit 1
 fi
 
-while getopts "d:u:bDSBeEnMmhfRCHJ" arg; do
+while getopts "d:u:bDsBeEnMmhfSRCHJ" arg; do
 	case "$arg" in
 		h)
 			help
@@ -199,6 +212,9 @@ while getopts "d:u:bDSBeEnMmhfRCHJ" arg; do
 			fi
 			count=$((count+1))
 			MERGE_DB[$count]="$OPTARG"
+			;;
+		S)
+			EXPORT_SQLITE=1
 			;;
 		R)
 			EXPORT_RAW=1
@@ -224,7 +240,7 @@ while getopts "d:u:bDSBeEnMmhfRCHJ" arg; do
 		n)
 			NULL_SSID=1
 			;;
-		S)
+		s)
 			SORT=1
 			;;
 		M) # Print only NULL MAC Vendor field
@@ -273,7 +289,7 @@ if [[ "${MERGE_DB[@]}" ]]; then
 			echo "Merging file '${MERGE_DB[$db_merge]}' in '$DB'..." >&2
 			sqlite3 "${MERGE_DB[$db_merge]}" ".dump $TABLE" | grep ^INSERT | sqlite3 "$DB"
 		else
-			echo "Il DB '${MERGE_DB[$db_merge]}' non e' un DB adatto per questo tipo di DB" >&2
+			echo "Il file '${MERGE_DB[$db_merge]}' non e' un DB adatto o non e' un DB di probeSniffer" >&2
 		fi
 	done
 	echo ""
@@ -284,7 +300,6 @@ fi
 echo "" >&2
 check_db
 echo "* Dump DB '"$DB"'..." >&2
-export_db_sqlite
 echo "" >&2
 output_data
 
