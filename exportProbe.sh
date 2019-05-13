@@ -167,6 +167,7 @@ function output_data() {
 	if [ -z "$CONTENT_DB" ]; then
 		return
 	fi
+
 	###EXPORT###
 	if [[ $EXPORT_RAW -eq 1 ]]; then
 		export_raw
@@ -268,15 +269,17 @@ while getopts "d:u:bDsBeEnMmhfSRCHJ" arg; do
 done
 shift $((OPTIND-1))
 
+
 if [ -z "$DB" ]; then
 	echo "Errore: Nessun DB specificato" >&2
 	exit 1
 fi
 if [[ "${MERGE_DB[@]}" ]]; then
 	echo ""
+	echo "* Backup db $DB in ${DB}_backup" >&2
+
 	if [[ $BACKUP -eq 1 ]]; then
 		if [ ! -f "${DB}_backup" ]; then
-			echo "* Backup db $DB in ${DB}_backup" >&2
 			echo "" >&2
 
 			if ! cp "$DB" "${DB}_backup" &>/dev/null; then
@@ -284,14 +287,18 @@ if [[ "${MERGE_DB[@]}" ]]; then
 				exit 1
 			fi
 		else
+			echo "" >&2
 			echo "Errore: un backup esiste gia" >&2
 			exit 1
 		fi
 	fi
 
 	for db_merge in $(seq 1 $count); do
-
 		if sqlite3 "$DB" ".tables" | grep 'probeSniffer' &>/dev/null; then
+			if [ "$DB" == "${MERGE_DB[$db_merge]}" ]; then
+				echo "Errore: Cosa fai? stai unendo lo stesso DB!"
+				exit 1
+			fi
 			echo "Merging file '${MERGE_DB[$db_merge]}' in '$DB'..." >&2
 			sqlite3 "${MERGE_DB[$db_merge]}" ".dump $TABLE" | grep ^INSERT | sqlite3 "$DB"
 		else
