@@ -1,8 +1,14 @@
 # exportProbe
-*Export data from tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer)*
+*Export data from the tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer)*
 
 <p align="center">
 <img src="img/example.gif">
+</p>
+
+# Example export in HTML:
+
+<p align="center">
+<img src="img/export_html.png">
 </p>
 
 # Dipendenze
