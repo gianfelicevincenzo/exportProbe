@@ -5,10 +5,16 @@
 <img src="img/example.gif">
 </p>
 
-# Example export in HTML:
+*Example export in **HTML**:*
 
 <p align="center">
 <img src="img/export_html.png">
+</p>
+
+*Example export in **CSV**:*
+
+<p align="center">
+<img src="img/export_csv.png">
 </p>
 
 # Dipendenze
