@@ -53,7 +53,7 @@ EOF
 	echo "	-B          Print without broadcast devices"
 	echo "	-D          Remove duplicate lines"
 	echo "	-S          Sort for ESSID"
-	echo "	-u          merge multiple DBs into principal DB"
+	echo "	-u          Merge multiple DBs into principal DB"
 	echo "	            (Es.) $0 -d file_principal.db -u file.db2 -u file.db3 -u file.db3 ecc..."
 	echo "	-b	    Backup DB before merge with other DB"
 	echo " 	-h          Show this help"
