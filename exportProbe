@@ -58,7 +58,7 @@ EOF
 	echo "	-B          Print devices WITHOUT broadcast request"
 	echo "	-D          Remove duplicate lines"
 	echo "	-s          Sort for ESSID"
-	echo "	-u          Merge multiple DBs into principal DB"
+	echo "	-u <file>   Merge multiple DBs into principal DB"
 	echo "	            (Es.) $0 -d file_principal.db -u file.db2 -u file.db3 -u file.db3 ecc..."
 	echo "	-b	    Backup DB before merge with other DB"
 	echo " 	-h          Show this help"
@@ -229,7 +229,7 @@ function output_data() {
 }
 
 ##MAIN##
-if ! command -v sqlite3 &>/dev/null; then
+if ! command -v sqlite3 &>/dev/null || ! command -v awk; then
      echo "Errore: Manca il comando 'sqlite3'. Installalo, prima di continuare"
      exit 1
 fi
@@ -323,7 +323,7 @@ while getopts "d:u:bDsBeEnMmwhfSRCHJX" arg; do
 done
 shift $((OPTIND-1))
 
-if [ -z "$DB" ]; the
+if [ -z "$DB" ]; then
 	echo "Errore: Nessun DB specificato" >&2
 	exit 1
 fi

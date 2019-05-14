@@ -21,6 +21,7 @@
 
 - sqlite3
 - curl
+- awk
 
 # Donazioni
 
