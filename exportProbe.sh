@@ -50,11 +50,11 @@ EOF
 	echo " Options:"
 	echo " 	-d <file>   Database file"
 	echo "	-f          Force read DB in case of error"
-	echo " 	-e          Print devices with an SSID"
-	echo " 	-E          Print devices that have null SSID field"
-	echo "	-n	    Print devices that have MAC vendor field correct"
-	echo "	-M          Print devices that do not have a MAC vendor"
-	echo "	-B          Print without broadcast devices"
+	echo " 	-e          Print devices with an SSID correct"
+	echo " 	-E          Print devices that DO NOT have a SSID"
+	echo "	-n	    Print devices with an MAC Vendor correct"
+	echo "	-M          Print devices that DO NOT have a MAC vendor"
+	echo "	-B          Print devices WITHOUT broadcast request"
 	echo "	-D          Remove duplicate lines"
 	echo "	-s          Sort for ESSID"
 	echo "	-u          Merge multiple DBs into principal DB"
@@ -157,6 +157,7 @@ function output_data() {
 		LENGTH=${#MAC_SEARCH[@]}
 
 		echo "+ Total MAC: $LENGTH" >&2
+		echo "+ (Local)" >&2
 		echo "" >&2
 
 		for (( i=0; i<$LENGTH; i++ )); do
