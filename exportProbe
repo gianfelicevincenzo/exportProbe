@@ -80,12 +80,21 @@ EOF
 }
 
 function check_db() {
-	check_sqlite="$(file --mime-type -b "$DB")"
+	DATABASE="$1"
+	if [ -z "$DATABASE" ]; then
+		exit 1
+	fi
+
+	check_sqlite="$(file --mime-type -b "$DATABASE")"
 	if [[ $FORCE -eq 1 ]]; then
 		return
 	fi
 	if ! echo "$check_sqlite" | grep -i 'sqlite' &> /dev/null;  then
-		echo "Errore: Il file '$DB' non e' un DB Sqlite" >&2
+		echo "Errore: Il file '$DATABASE' non e' un DB Sqlite" >&2
+		exit 1
+	fi
+	if ! sqlite3 "$DATABASE" ".tables" | grep 'probeSniffer' &>/dev/null; then
+		echo "Errore: Il file '$DATABASE' non e' un DB adatto o non e' un DB di probeSniffer" >&2
 		exit 1
 	fi
 }
@@ -229,7 +238,7 @@ function output_data() {
 }
 
 ##MAIN##
-if ! command -v sqlite3 &>/dev/null || ! command -v awk; then
+if ! command -v sqlite3 &>/dev/null || ! command -v awk &>/dev/null; then
      echo "Errore: Manca il comando 'sqlite3'. Installalo, prima di continuare"
      exit 1
 fi
@@ -324,14 +333,17 @@ done
 shift $((OPTIND-1))
 
 if [ -z "$DB" ]; then
-	echo "Errore: Nessun DB specificato" >&2
+	echo "Errore: Nessun DB Sqlite specificato" >&2
 	exit 1
 fi
-if [[ "${MERGE_DB[@]}" ]]; then
-	echo ""
-	echo "* Backup db $DB in ${DB}_backup" >&2
 
+check_db "$DB"
+
+if [[ "${MERGE_DB[@]}" ]]; then
 	if [[ $BACKUP -eq 1 ]]; then
+		echo ""
+		echo "* Backup db $DB in ${DB}_backup" >&2
+
 		if [ ! -f "${DB}_backup" ]; then
 			echo "" >&2
 
@@ -347,24 +359,19 @@ if [[ "${MERGE_DB[@]}" ]]; then
 	fi
 
 	for db_merge in $(seq 1 $count); do
-		if sqlite3 "$DB" ".tables" | grep 'probeSniffer' &>/dev/null; then
-			if [ "$DB" == "${MERGE_DB[$db_merge]}" ]; then
-				echo "Errore: Cosa fai? stai unendo lo stesso DB!"
-				exit 1
-			fi
-			echo "Merging file '${MERGE_DB[$db_merge]}' in '$DB'..." >&2
-			sqlite3 "${MERGE_DB[$db_merge]}" ".dump $TABLE" | grep ^INSERT | sqlite3 "$DB"
-		else
-			echo "Il file '${MERGE_DB[$db_merge]}' non e' un DB adatto o non e' un DB di probeSniffer" >&2
+		check_db "${MERGE_DB[$db_merge]}"
+		if [ "$DB" == "${MERGE_DB[$db_merge]}" ]; then
+			echo "Errore: Cosa fai!? stai unendo lo stesso DB!"
+			exit 1
 		fi
+		echo "+ Merging file '${MERGE_DB[$db_merge]}' in '$DB'..." >&2
+		sqlite3 "${MERGE_DB[$db_merge]}" ".dump $TABLE" | grep ^INSERT | sqlite3 "$DB"
 	done
-	echo ""
 
 	exit 0
 fi
 
 echo "" >&2
-check_db
 echo "* Dump DB '"$DB"'..." >&2
 echo "" >&2
 output_data
