@@ -68,7 +68,6 @@ EOF
 	echo "	            The file default is 'oui.txt'"
 	echo "	-w	    Search Vendor MAC Address for devices that were not found"
 	echo "		    The search is performed online (view https://macvendors.com)"
-	echo "	--wigle	    Search More Information on wigle (view https://wigle.net/)"
 	echo ""
 	echo " Export Format:"
 	echo "	-S	    Dump all tables and fields of the DB Sqlite for backup"
