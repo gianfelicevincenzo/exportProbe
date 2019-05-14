@@ -6,7 +6,8 @@
 
 set -o noclobber
 
-NAME_MAC_FILE_VENDOR="oui.txt"
+VENDOR_SITE='https://api.macvendors.com/'
+NAME_MAC_FILE_VENDOR="lib/oui.txt"
 count=0
 
 TABLE='probeSniffer'
@@ -16,11 +17,12 @@ SSID=0
 NULL_SSID=0
 MERGE_DB=()
 BACKUP=0
-SSID_AND_MAC_CORRECT=0
-NULL_MAC_VENDOR=0
+MAC_VENDOR_CORRECT=0
+MAC_VENDOR_NULL=0
 REMOVE_BROADCAST=0
 FORCE_OPERATION=0
-REPLACE_MAC_VENDOR_ERROR=0
+FIND_MAC_VENDOR_LOCAL=0
+FIND_MAC_VENDOR_ONLINE=0
 REMOVE_DUPLICATE=0
 SORT=0
 VENDOR_RESOLVE=""
@@ -43,15 +45,15 @@ cat << "EOF"
 
 EOF
 	echo""
-	echo " Usage: $0 -d file.db [ -E | -e | -n | ... ] | -h"
+	echo " Usage: $0 -d file.db [ -BenC | -B | -E | ... ] | -h"
 	echo ""
 	echo " Options:"
 	echo " 	-d <file>   Database file"
 	echo "	-f          Force read DB in case of error"
-	echo " 	-e          Print only devices with an SSID"
-	echo " 	-n          Print only devices that have null SSID field"
-	echo "	-M          Print only devices that do not have a MAC vendor"
-	echo " 	-E          Print only devices that have correct SSID and MAC vendor field"
+	echo " 	-e          Print devices with an SSID"
+	echo " 	-E          Print devices that have null SSID field"
+	echo "	-n	    Print devices that have MAC vendor field correct"
+	echo "	-M          Print devices that do not have a MAC vendor"
 	echo "	-B          Print without broadcast devices"
 	echo "	-D          Remove duplicate lines"
 	echo "	-s          Sort for ESSID"
@@ -61,6 +63,8 @@ EOF
 	echo " 	-h          Show this help"
 	echo " 	-m          Search Vendor MAC Address for devices that were not found"
 	echo "	            The file default is 'oui.txt'"
+	echo "	-w	    Search Vendor MAC Address for devices that were not found"
+	echo "		    The search is performed online"
 	echo ""
 	echo " Export Format:"
 	echo "	-S	    Dump all tables and fields of the DB Sqlite for backup"
@@ -123,47 +127,68 @@ function output_data() {
 	if [[ $REMOVE_DUPLICATE -eq 1 ]]; then
 		CONTENT_DB="$(echo "$CONTENT_DB" | sort -uk1,3)"
 	fi
+	if [[ $SORT -eq 1 ]]; then
+		CONTENT_DB="$(echo "$CONTENT_DB" | sort -t '|' -k3,3)"
+	fi
 	if [[ $SSID -eq 1 ]]; then
 		CONTENT_DB="$(echo "$CONTENT_DB" | grep -v '|SSID: |')"
 	fi
 	if [[ $NULL_SSID -eq 1 ]]; then
 		CONTENT_DB="$(echo "$CONTENT_DB" | grep '|SSID: |')"
 	fi
-	if [[ $SORT -eq 1 ]]; then
-		CONTENT_DB="$(echo "$CONTENT_DB" | sort -t '|' -k3,3)"
+	if [[ $MAC_VENDOR_CORRECT -eq 1 ]]; then
+		CONTENT_DB="$(echo "$CONTENT_DB" | grep -v '|RESOLVE-ERROR|')"
 	fi
-	if [[ $NULL_MAC_VENDOR -eq 1 ]]; then
+	if [[ $MAC_VENDOR_NULL -eq 1 ]]; then
 		CONTENT_DB="$(echo "$CONTENT_DB" | grep '|RESOLVE-ERROR|')"
-	fi
-	if [[ $SSID_AND_MAC_CORRECT -eq 1 ]]; then
-		CONTENT_DB="$(echo "$CONTENT_DB" | grep -Ev '\|SSID: \||\|RESOLVE-ERROR\|')"
 	fi
 	if [[ $REMOVE_BROADCAST -eq 1 ]]; then
 		CONTENT_DB="$(echo "$CONTENT_DB" | grep -iv 'ff:ff:ff:ff:ff:ff')"
 	fi
-	if [[ $REPLACE_MAC_VENDOR_ERROR -eq 1 ]]; then
-		if [ ! -f oui.txt ]; then
-			echo "Errore: Impossibile trovare il file 'oui.txt'" >&2
+	if [[ $FIND_MAC_VENDOR_LOCAL -eq 1 ]]; then
+		if [ ! -f "$NAME_MAC_FILE_VENDOR" ]; then
+			echo "Errore: Impossibile trovare il file '$NAME_MAC_FILE_VENDOR'" >&2
 			exit 1
 		fi
-		MAC_SEARCH=($(echo "$CONTENT_DB" | grep 'RESOLVE-ERROR' | awk 'BEGIN{FS="|"}{print $1}' | paste -s -d' '))
+		MAC_SEARCH=($(echo "$CONTENT_DB" | grep '|RESOLVE-ERROR|' | awk 'BEGIN{FS="|"}{print $1}' | paste -s -d' '))
 		if [ -z "$MAC_SEARCH" ]; then
 			return
 		fi
-		VENDOR_FOUND=""
 		LENGTH=${#MAC_SEARCH[@]}
 
 		echo "+ Total MAC: $LENGTH" >&2
-		echo "+ Searching vendor..." >&2
+		echo "" >&2
 
 		for (( i=0; i<$LENGTH; i++ )); do
-			VENDOR_FOUND="$(grep -Ei "$(echo ${MAC_SEARCH[$i]} | awk 'BEGIN{FS=":"}{print $1$2$3}')""|""$(echo ${MAC_SEARCH[$i]} | awk 'BEGIN{FS=":"}{print $1":"$2":"$3}')" $NAME_MAC_FILE_VENDOR | awk '{print $2}')"
+			VENDOR_FOUND="$(grep -Ei "$(echo "${MAC_SEARCH[$i]}" | awk 'BEGIN{FS=":"}{print $1$2$3}')"\|"$(echo "${MAC_SEARCH[$i]}" | awk 'BEGIN{FS=":"}{print $1":"$2":"$3}')" $NAME_MAC_FILE_VENDOR | tr -s '\t' '\t' | awk 'BEGIN{ FS="\t" }{printf("%s",$2)}')"
+
 			if [ ! -z "$VENDOR_FOUND" ]; then
-				CONTENT_DB="$(echo "$CONTENT_DB" | sed s/${MAC_SEARCH[$i]}\|RESOLVE-ERROR\|/${MAC_SEARCH[$i]}\|$VENDOR_FOUND\|/)"
+				CONTENT_DB="$(echo "$CONTENT_DB" | sed "s/${MAC_SEARCH[$i]}|RESOLVE-ERROR|/${MAC_SEARCH[$i]}|$VENDOR_FOUND|/")"
 			fi
 		done
 	fi
+	if [[ $FIND_MAC_VENDOR_ONLINE -eq 1 ]]; then
+		MAC_SEARCH=($(echo "$CONTENT_DB" | grep '|RESOLVE-ERROR|' | awk 'BEGIN{FS="|"}{print $1}' | paste -s -d' '))
+		if [ -z "$MAC_SEARCH" ]; then
+			return
+		fi
+		LENGTH=${#MAC_SEARCH[@]}
 
+		echo "+ Total MAC: $LENGTH" >&2
+		echo "+ 1 Request/second for FREE PLANS (view https://macvendors.com/plans)" >&2
+		echo "" >&2
+
+		for (( i=0; i<$LENGTH; i++ )); do
+			sleep 1.2 # 1 request / second for FREE PLANS (view https://macvendors.com/plans)
+			VENDOR_FOUND="$(curl --silent $VENDOR_SITE/${MAC_SEARCH[$i]} | grep -vi '^\{.*\}$')"
+
+			if [ ! -z "$VENDOR_FOUND" ]; then
+				echo "$VENDOR_FOUND" | cat -A
+				CONTENT_DB="$(echo "$CONTENT_DB" | sed "s/${MAC_SEARCH[$i]}|RESOLVE-ERROR|/${MAC_SEARCH[$i]}|$VENDOR_FOUND|/")"
+			fi
+		done
+	fi
+	
 	if [ -z "$CONTENT_DB" ]; then
 		return
 	fi
@@ -195,7 +220,7 @@ if [[ $# -lt 1 ]]; then
 	exit 1
 fi
 
-while getopts "d:u:bDsBeEnMmhfSRCHJ" arg; do
+while getopts "d:u:bDsBeEnMmwhfSRCHJ" arg; do
 	case "$arg" in
 		h)
 			help
@@ -238,20 +263,20 @@ while getopts "d:u:bDsBeEnMmhfSRCHJ" arg; do
 		e)
 			SSID=1
 			;;
-		E) # Print only correct SSID and MAC Vendor field
-			SSID_AND_MAC_CORRECT=1
+		E)
+			NULL_SSID=1
 			;;
 		B) # Not print devices broadcast
 			REMOVE_BROADCAST=1
 			;;
 		n)
-			NULL_SSID=1
+			MAC_VENDOR_CORRECT=1
 			;;
 		s)
 			SORT=1
 			;;
 		M) # Print only NULL MAC Vendor field
-			NULL_MAC_VENDOR=1
+			MAC_VENDOR_NULL=1
 			;;
 		D)
 			REMOVE_DUPLICATE=1
@@ -260,7 +285,10 @@ while getopts "d:u:bDsBeEnMmhfSRCHJ" arg; do
 			FORCE=1
 			;;
 		m)
-			REPLACE_MAC_VENDOR_ERROR=1
+			FIND_MAC_VENDOR_LOCAL=1
+			;;
+		w)
+			FIND_MAC_VENDOR_ONLINE=1
 			;;
 		*|?)
 			exit 1

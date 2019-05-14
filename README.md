@@ -20,6 +20,7 @@
 # Dipendenze
 
 - sqlite3
+- curl
 
 # Donazioni
 
