@@ -32,6 +32,7 @@ EXPORT_RAW=0
 EXPORT_CSV=0
 EXPORT_HTML=0
 EXPORT_JSON=0
+EXPORT_XML=0
 DUMP_SQLITE=0
 
 function help() {
@@ -61,10 +62,13 @@ EOF
 	echo "	            (Es.) $0 -d file_principal.db -u file.db2 -u file.db3 -u file.db3 ecc..."
 	echo "	-b	    Backup DB before merge with other DB"
 	echo " 	-h          Show this help"
+	echo ""
+	echo " Adavanced Search:"
 	echo " 	-m          Search Vendor MAC Address for devices that were not found"
 	echo "	            The file default is 'oui.txt'"
 	echo "	-w	    Search Vendor MAC Address for devices that were not found"
-	echo "		    The search is performed online"
+	echo "		    The search is performed online (view https://macvendors.com)"
+	echo "	--wigle	    Search More Information on wigle (view https://wigle.net/)"
 	echo ""
 	echo " Export Format:"
 	echo "	-S	    Dump all tables and fields of the DB Sqlite for backup"
@@ -72,6 +76,7 @@ EOF
 	echo "	-C	    Export CSV format"
 	echo " 	-H	    Export HTML format"
 	echo "	-J	    Export JSON format"
+	echo "	-X	    Export XML format"
 	echo ""
 }
 
@@ -116,6 +121,11 @@ function export_json() {
 	echo -e "$CONTENT_DB" | awk -f lib/parser_json.awk
 }
 
+function export_xml() {
+	CONTENT_DB="$HEADER\n$CONTENT_DB"
+	echo -e "$CONTENT_DB" | awk -f lib/parser_xml.awk
+}
+
 function output_data() {
 	if [[ $DUMP_SQLITE -eq 1 ]]; then
 		dump_db_sqlite
@@ -157,7 +167,7 @@ function output_data() {
 		LENGTH=${#MAC_SEARCH[@]}
 
 		echo "+ Total MAC: $LENGTH" >&2
-		echo "+ (Local)" >&2
+		echo "+ Search (Local)..." >&2
 		echo "" >&2
 
 		for (( i=0; i<$LENGTH; i++ )); do
@@ -176,7 +186,7 @@ function output_data() {
 		LENGTH=${#MAC_SEARCH[@]}
 
 		echo "+ Total MAC: $LENGTH" >&2
-		echo "+ 1 Request/second for FREE PLANS (view https://macvendors.com/plans)" >&2
+		echo "+ Search (Online - 1 Request/second for FREE PLANS (view https://macvendors.com/plans))..." >&2
 		echo "" >&2
 
 		for (( i=0; i<$LENGTH; i++ )); do
@@ -207,6 +217,10 @@ function output_data() {
 		export_json
 		exit 0
 	fi
+	if [[ $EXPORT_XML -eq 1 ]]; then
+		export_xml
+		exit 0
+	fi
 	if [[ $EXPORT_CSV -eq 1 ]]; then
 		export_csv
 		exit 0
@@ -216,12 +230,17 @@ function output_data() {
 }
 
 ##MAIN##
+if ! command -v sqlite3 &>/dev/null; then
+     echo "Errore: Manca il comando 'sqlite3'. Installalo, prima di continuare"
+     exit 1
+fi
+
 if [[ $# -lt 1 ]]; then
 	help
 	exit 1
 fi
 
-while getopts "d:u:bDsBeEnMmwhfSRCHJ" arg; do
+while getopts "d:u:bDsBeEnMmwhfSRCHJX" arg; do
 	case "$arg" in
 		h)
 			help
@@ -261,6 +280,9 @@ while getopts "d:u:bDsBeEnMmwhfSRCHJ" arg; do
 		J)
 			EXPORT_JSON=1
 			;;
+		X)
+			EXPORT_XML=1
+			;;
 		e)
 			SSID=1
 			;;
@@ -289,6 +311,10 @@ while getopts "d:u:bDsBeEnMmwhfSRCHJ" arg; do
 			FIND_MAC_VENDOR_LOCAL=1
 			;;
 		w)
+			if ! command -v curl &> /dev/null; then
+				echo "Errore: Manca il comando 'curl'. Installalo se vuoi utilizzare questa funzione."
+				exit 1
+			fi
 			FIND_MAC_VENDOR_ONLINE=1
 			;;
 		*|?)
@@ -298,7 +324,7 @@ while getopts "d:u:bDsBeEnMmwhfSRCHJ" arg; do
 done
 shift $((OPTIND-1))
 
-if [ -z "$DB" ]; then
+if [ -z "$DB" ]; the
 	echo "Errore: Nessun DB specificato" >&2
 	exit 1
 fi

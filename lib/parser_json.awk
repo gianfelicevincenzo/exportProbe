@@ -24,6 +24,7 @@ BEGIN {
 	} else {
 	   #Write parser data DB
 	   printf("   {\n")
+           #printf("      id : \"%d\",\n", NR)
 	   printf("      \"%s\" : \"%s\",\n", mac, $1)
 	   printf("      \"%s\" : \"%s\",\n", vendor, $2)
 	   printf("      \"%s\" : \"%s\",\n", essid, $3)

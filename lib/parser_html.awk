@@ -40,7 +40,7 @@ BEGIN {
    printf("   </style>\n")
    printf("</head>\n")
    printf("<body>\n")
-   printf("<h1>Export Data</h1>\n")
+   printf("<h1>Data Export</h1>\n")
    printf("<br />\n")
    printf("   <table align=\"left\">\n")
 }
@@ -50,7 +50,7 @@ BEGIN {
       if ( NF > 6 ) {
       	exit 1
       }
-   
+
       #Assign variable header DB
       printf("     <thead>\n") 
       printf("        <th id=\"header_field\">MAC</th>\n") 
