@@ -1,5 +1,5 @@
 # exportProbe
-*Export data from the tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer)*
+*Export data from tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer)*
 
 <p align="center">
 <img src="img/example.gif">
