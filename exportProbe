@@ -239,7 +239,7 @@ function output_data() {
 
 ##MAIN##
 if ! command -v sqlite3 &>/dev/null || ! command -v awk &>/dev/null; then
-     echo "Errore: Manca il comando 'sqlite3'. Installalo, prima di continuare"
+     echo "Errore: Mancano i comandi 'sqlite3' o 'curl'. Installali, prima di continuare"
      exit 1
 fi
 
@@ -341,10 +341,9 @@ check_db "$DB"
 
 if [[ "${MERGE_DB[@]}" ]]; then
 	if [[ $BACKUP -eq 1 ]]; then
-		echo ""
-		echo "* Backup db $DB in ${DB}_backup" >&2
-
 		if [ ! -f "${DB}_backup" ]; then
+			echo "" >&2
+			echo "* Backup db $DB in ${DB}_backup" >&2
 			echo "" >&2
 
 			if ! cp "$DB" "${DB}_backup" &>/dev/null; then
@@ -352,7 +351,6 @@ if [[ "${MERGE_DB[@]}" ]]; then
 				exit 1
 			fi
 		else
-			echo "" >&2
 			echo "Errore: un backup esiste gia" >&2
 			exit 1
 		fi
@@ -360,7 +358,7 @@ if [[ "${MERGE_DB[@]}" ]]; then
 
 	for db_merge in $(seq 1 $count); do
 		check_db "${MERGE_DB[$db_merge]}"
-		if [ "$DB" == "${MERGE_DB[$db_merge]}" ]; then
+		if [ "$(readlink -f $DB)" == "$(readlink -f ${MERGE_DB[$db_merge]})" ]; then
 			echo "Errore: Cosa fai!? stai unendo lo stesso DB!"
 			exit 1
 		fi
