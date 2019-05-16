@@ -239,7 +239,7 @@ function output_data() {
 
 ##MAIN##
 if ! command -v sqlite3 &>/dev/null || ! command -v awk &>/dev/null; then
-     echo "Errore: Mancano i comandi 'sqlite3' o 'curl'. Installali, prima di continuare"
+     echo "Errore: Mancano i comandi 'sqlite3' o 'curl'. Installali, prima di continuare" >&2
      exit 1
 fi
 
@@ -320,7 +320,7 @@ while getopts "d:u:bDsBeEnMmwhfSRCHJX" arg; do
 			;;
 		w)
 			if ! command -v curl &> /dev/null; then
-				echo "Errore: Manca il comando 'curl'. Installalo se vuoi utilizzare questa funzione."
+				echo "Errore: Manca il comando 'curl'. Installalo se vuoi utilizzare questa funzione." >&2
 				exit 1
 			fi
 			FIND_MAC_VENDOR_ONLINE=1
@@ -331,6 +331,10 @@ while getopts "d:u:bDsBeEnMmwhfSRCHJX" arg; do
 	esac
 done
 shift $((OPTIND-1))
+if [ $OPTIND -eq 1 ]; then
+	help
+	exit 1
+fi
 
 if [ -z "$DB" ]; then
 	echo "Errore: Nessun DB Sqlite specificato" >&2
