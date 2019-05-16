@@ -1,6 +1,8 @@
 # exportProbe
 *Export data from tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer)*
 
+*Now export in: **CSV**, **JSON**, **XML**, **HTML** and more!*
+
 <p align="center">
 <img src="img/example.gif">
 </p>
