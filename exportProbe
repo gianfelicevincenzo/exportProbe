@@ -7,7 +7,7 @@
 set -o noclobber
 
 VENDOR_SITE='https://api.macvendors.com/'
-NAME_MAC_FILE_VENDOR="lib/oui.txt"
+NAME_MAC_FILE_VENDOR="lib/oui/oui.txt"
 count=0
 
 TABLE='probeSniffer'
