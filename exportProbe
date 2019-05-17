@@ -331,7 +331,7 @@ while getopts "d:u:bDsBeEnMmwhfSRCHJX" arg; do
 	esac
 done
 shift $((OPTIND-1))
-if [ $OPTIND -eq 1 ]; then
+if [[ $OPTIND -eq 1 ]]; then
 	help
 	exit 1
 fi

@@ -1,6 +1,8 @@
 # exportProbe
 *Export data from tool **probeSniffer.py** (https://github.com/xdavidhu/probeSniffer)*
 
+<br />
+
 *Now export in: **CSV**, **JSON**, **XML**, **HTML** and more!*
 
 <p align="center">
@@ -24,6 +26,15 @@
 - sqlite3
 - curl
 - awk
+
+# Download
+
+```
+git clone https://github.com/vincenzogianfelice/exportProbe
+cd exportProbe
+git submodule init
+git submodule update
+```
 
 # Donazioni
 
