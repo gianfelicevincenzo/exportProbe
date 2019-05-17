@@ -27,7 +27,9 @@
 - curl
 - awk
 
-# Download
+# Download And Upgrade
+
+*Download*
 
 ```
 git clone https://github.com/vincenzogianfelice/exportProbe
@@ -36,6 +38,13 @@ git submodule init
 git submodule update
 ```
 
+*Upgrade*
+
+```
+cd exportProbe
+git pull
+git submodule update --remote --merge
+```
 # Donazioni
 
 **BTC:** *3EwV4zt9r5o4aTHyqjcM6CfqSVirSEmN6y*
