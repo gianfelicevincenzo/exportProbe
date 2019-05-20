@@ -61,7 +61,7 @@ set -o noclobber
 
 ########################
   API=''  # INSERT YOU API BEETWEN ' '. (eg.) API='saadljhniu2y78yinh21iuh21nyh2112....'
-#######################\
+########################
 ```
 
 # Donazioni
