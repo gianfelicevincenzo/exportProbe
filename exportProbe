@@ -6,7 +6,11 @@
 
 set -o noclobber
 
-VENDOR_SITE='https://api.macvendors.com/'
+########################
+API=''	# INSERT YOU API BEETWEN ' '. (eg.) API='saadljhniu2y78yinh21iuh21nyh2112....'
+########################
+
+VENDOR_SITE='https://api.macvendors.com'
 NAME_MAC_FILE_VENDOR="lib/oui/oui.txt"
 count=0
 
@@ -193,16 +197,22 @@ function output_data() {
 		fi
 		LENGTH=${#MAC_SEARCH[@]}
 
+		# 1 request / second for 1000 Request/day FREE PLANS (view https://macvendors.com/plans)
+		if [ ! -z "$API" ]; then
+			CURL_COMMAND="curl --silent -H \"Authorization: Bearer $API\" -H \"Accept: text/plain\""
+			VENDOR_SITE="$VENDOR_SITE/v1/lookup"
+		else
+			CURL_COMMAND="curl --silent"
+		fi
+
 		echo "+ Total MAC: $LENGTH" >&2
 		echo "+ Search (Online - 1 Request/second for FREE PLANS (view https://macvendors.com/plans))..." >&2
 		echo "" >&2
 
 		for (( i=0; i<$LENGTH; i++ )); do
-			sleep 1.2 # 1 request / second for FREE PLANS (view https://macvendors.com/plans)
-			VENDOR_FOUND="$(curl --silent $VENDOR_SITE/${MAC_SEARCH[$i]} | grep -vi '^\{.*\}$')"
-
+			VENDOR_FOUND="$($CURL_COMMAND $VENDOR_SITE/${MAC_SEARCH[$i]} | grep -vE '^\{.*\}$')"
+			
 			if [ ! -z "$VENDOR_FOUND" ]; then
-				echo "$VENDOR_FOUND" | cat -A
 				CONTENT_DB="$(echo "$CONTENT_DB" | sed "s/${MAC_SEARCH[$i]}|RESOLVE-ERROR|/${MAC_SEARCH[$i]}|$VENDOR_FOUND|/")"
 			fi
 		done
@@ -238,8 +248,8 @@ function output_data() {
 }
 
 ##MAIN##
-if ! command -v sqlite3 &>/dev/null || ! command -v awk &>/dev/null; then
-     echo "Errore: Mancano i comandi 'sqlite3' o 'curl'. Installali, prima di continuare" >&2
+if ! command -v sqlite3 &>/dev/null || ! command -v awk &>/dev/null || ! command -v file &>/dev/null; then
+     echo "Errore: Mancano i comandi 'sqlite3'. 'file' o 'curl'. Installali, prima di continuare" >&2
      exit 1
 fi
 
