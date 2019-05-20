@@ -191,12 +191,6 @@ function output_data() {
 		done
 	fi
 	if [[ $FIND_MAC_VENDOR_ONLINE -eq 1 ]]; then
-		# Check API
-		if curl --silent "$VENDOR_SITE/v1/lookup/TEST" -H "Authorization: Bearer $API" -H "Accept: text/plain" | grep -i 'Unauthorized' &>/dev/null; then
-			echo "Errore: API Incorrect!"
-			exit 1
-		fi
-
 		MAC_SEARCH=($(echo "$CONTENT_DB" | grep '|RESOLVE-ERROR|' | awk 'BEGIN{FS="|"}{print $1}' | paste -s -d' '))
 		if [ -z "$MAC_SEARCH" ]; then
 			return
@@ -205,6 +199,12 @@ function output_data() {
 
 		# 1 request / second for 1000 Request/day FREE PLANS (view https://macvendors.com/plans)
 		if [ ! -z "$API" ]; then
+			# Check API
+			if curl --silent "$VENDOR_SITE/v1/lookup/TEST" -H "Authorization: Bearer $API" -H "Accept: text/plain" | grep -i 'Unauthorized' &>/dev/null; then
+				echo "Errore: API Incorrect!"
+				exit 1
+			fi
+
 			CURL_COMMAND="curl --silent -H \"Authorization: Bearer $API\" -H \"Accept: text/plain\""
 			VENDOR_SITE="$VENDOR_SITE/v1/lookup"
 		else
