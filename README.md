@@ -26,6 +26,7 @@
 - sqlite3
 - curl
 - awk
+- file
 
 # Download And Upgrade
 
