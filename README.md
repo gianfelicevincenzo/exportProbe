@@ -47,8 +47,8 @@ git submodule update --remote --merge
 ```
 # Settings
 
-Importa la tua API da macvendors.com. Effettua il login su https://app.macvendors.com/auth/login, genera il token
-dalla pagina e inseriscila *exportProbe* nella variabile **API**:
+Importa la tua API da ***macvendors.com***. Effettua il login su https://app.macvendors.com/auth/login, genera il token
+dalla pagina e inseriscila in ***exportProbe*** nella variabile **API**:
 
 ```
 #!/bin/bash
