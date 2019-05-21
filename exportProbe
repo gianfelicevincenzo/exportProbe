@@ -93,11 +93,11 @@ function check_db() {
 	if [[ $FORCE -eq 1 ]]; then
 		return
 	fi
-	if ! echo "$check_sqlite" | grep -i 'sqlite' &> /dev/null;  then
+	if ! echo "$check_sqlite" | grep -q -i 'sqlite';  then
 		echo "Errore: Il file '$DATABASE' non e' un DB Sqlite" >&2
 		exit 1
 	fi
-	if ! sqlite3 "$DATABASE" ".tables" | grep 'probeSniffer' &>/dev/null; then
+	if ! sqlite3 "$DATABASE" ".tables" | grep -q 'probeSniffer'; then
 		echo "Errore: Il file '$DATABASE' non e' un DB adatto o non e' un DB di probeSniffer" >&2
 		exit 1
 	fi
@@ -172,6 +172,7 @@ function output_data() {
 			echo "Errore: Impossibile trovare il file '$NAME_MAC_FILE_VENDOR'" >&2
 			exit 1
 		fi
+
 		MAC_SEARCH=($(echo "$CONTENT_DB" | grep '|RESOLVE-ERROR|' | awk 'BEGIN{FS="|"}{print $1}' | paste -s -d' '))
 		if [ -z "$MAC_SEARCH" ]; then
 			return
@@ -200,15 +201,15 @@ function output_data() {
 		# 1 request / second for 1000 Request/day FREE PLANS (view https://macvendors.com/plans)
 		if [ ! -z "$API" ]; then
 			# Check API
-			if curl --silent "$VENDOR_SITE/v1/lookup/TEST" -H "Authorization: Bearer $API" -H "Accept: text/plain" | grep -i 'Unauthorized' &>/dev/null; then
+			if curl --silent "$VENDOR_SITE/v1/lookup/TEST" -H "Authorization: Bearer $API" -H "Accept: text/plain" | grep -q -i 'Unauthorized'; then
 				echo "Errore: API Incorrect!"
 				exit 1
 			fi
 
-			CURL_COMMAND="curl --silent -H \"Authorization: Bearer $API\" -H \"Accept: text/plain\""
-			VENDOR_SITE="$VENDOR_SITE/v1/lookup"
+			CURL_COMMAND="curl --fail --silent -H \"Authorization: Bearer $API\" -H \"Accept: text/plain\""
+			VENDOR_SITE="${VENDOR_SITE}/v1/lookup"
 		else
-			CURL_COMMAND="curl --silent"
+			CURL_COMMAND="curl --fail --silent"
 		fi
 
 		echo "+ Total MAC: $LENGTH" >&2
@@ -216,7 +217,7 @@ function output_data() {
 		echo "" >&2
 
 		for (( i=0; i<$LENGTH; i++ )); do
-			VENDOR_FOUND="$($CURL_COMMAND $VENDOR_SITE/${MAC_SEARCH[$i]} | grep -vE '^\{.*\}$')"
+			VENDOR_FOUND="$(eval $CURL_COMMAND ${VENDOR_SITE}/${MAC_SEARCH[$i]} | grep -vE '^\{.*\}$')"
 			
 			if [ ! -z "$VENDOR_FOUND" ]; then
 				CONTENT_DB="$(echo "$CONTENT_DB" | sed "s/${MAC_SEARCH[$i]}|RESOLVE-ERROR|/${MAC_SEARCH[$i]}|$VENDOR_FOUND|/")"
