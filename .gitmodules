@@ -1,3 +1,0 @@
-[submodule "lib/oui"]
-	path = lib/oui
-	url = git://github.com/vincenzogianfelice/OUI
